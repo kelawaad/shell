@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <signal.h>
 #include "shell.h"
 
 // Uncomment the next line stop debugging output
@@ -21,6 +22,10 @@ int main(int argc, char** argv) {
         fgets(current_command, COMMAND_MAXLEN + 1, stdin);
 
         int command_length = getCommandLength(current_command);
+		if(command_length == COMMAND_MAX_LEN_EXCEEDED)
+		{
+			printf("Command max limit exceeded\n");
+		}
         int run_in_background = 0;
         int num_args;
 
@@ -29,6 +34,7 @@ int main(int argc, char** argv) {
             // Remove the '\n' from the command
             current_command[command_length - 1] = 0;
             command_length--;
+
             debug_print("Command: %s\n", current_command);
             debug_print("Command length: %d\n", command_length);
 
@@ -36,10 +42,6 @@ int main(int argc, char** argv) {
 			{
 				is_running = 0;
                 break;
-			}			
-			else if(strcmp(current_command, "cd") == 0)
-			{
-				
 			}
 
             char **command_params = parseCommand(current_command, command_length, &num_args);
@@ -48,18 +50,29 @@ int main(int argc, char** argv) {
 				command_params[num_args - 1] = NULL;
                 run_in_background = 1;
             }
+
+			if(strcmp(command_params[0], "cd") == 0)
+			{
+				printf("CD command\n");
+				printf("PWD = %s\n", getenv("PWD"));
+				//int ret = chdir(command_params[1]);
+				if(ret == -1)
+                    print_error("cd");
+				continue;
+			}
+
             pid_t pid = fork();
             int status;
             if(pid == 0)
             {
                 //CHILD Process
                 int error = execvp(command_params[0], command_params);
-				print_error();
+				print_error(command_params[0]);
 				break;
 
             } else if (pid > 0) {
                 // PARENT Process
-		
+
                 if(run_in_background) {
 					// NOT WORKING correctly
 					waitpid(pid, &status, WNOHANG);
@@ -78,7 +91,7 @@ char **parseCommand(char *command, int command_length, int *num_args) {
 
     debug_print("%s, %d\n", command, command_length);
 
-    char *current_str = malloc((COMMAND_MAXLEN + 1) * sizeof(char));
+    char *current_str = malloc((command_length + 1) * sizeof(char));
     char **parsed_command = malloc(MAX_ARGS_NUM * sizeof(char*));
     int index = 0, current_str_index = 0, command_index = 0;
     while(index < command_length)
@@ -107,6 +120,8 @@ char **parseCommand(char *command, int command_length, int *num_args) {
     return parsed_command;
 }
 
+
+// Prints a NULL-terminated list of strings
 void printArgs(char **args)
 {
     int i = 0;
@@ -114,6 +129,8 @@ void printArgs(char **args)
         printf("%s\n", args[i++]);
 }
 
+
+// Gets the name of the source file
 char* getFileName(char *file_name_wpath)
 {
     int length = strlen(file_name_wpath);
@@ -132,6 +149,7 @@ char* getFileName(char *file_name_wpath)
     return file_name;
 }
 
+
 int getCommandLength(char *command) {
     if(command == NULL)
         return -1;
@@ -141,17 +159,31 @@ int getCommandLength(char *command) {
     {
         length++;
         if(length > COMMAND_MAXLEN)
-            return 0; // Return 0 if the command exceeds the maximum limit
+            return COMMAND_MAX_LEN_EXCEEDED; // Return 0 if the command exceeds the maximum limit
     }
     return length;
 }
 
-void print_error() {
+void print_error(char *command) {
 	int err = errno;
-	//printf("Error = %d", err);
+	debug_print("Error = %d", err);
+	if(strcmp(command, "cd") == 0) {
+        if(err == ENOENT) {
+            // Directory doesn't exist
+        }
+        else if(err == ENOTDIR) {
+            // A component is not a directory
+        }
+        else if(err == EFAULT) {
+
+        }
+        else if(err == EACCES) {
+
+        }
+	}
 	if(err == ENOENT)
 	{
-		fputs("Invalid command\n", stderr);
+		printf("%s: command not found\n", command);
 	}
 
 }

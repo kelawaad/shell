@@ -23,12 +23,15 @@
 // Maximum number of arguments per command
 #define MAX_ARGS_NUM 100
 
+#define NULL_COMMAND -1
+#define COMMAND_MAX_LEN_EXCEEDED -2
+
 char *file_name;
 
 char **parseCommand(char *command, int command_length, int *num_args);
 void printArgs(char **args);
 char* getFileName(char *file_name_wpath);
 int getCommandLength(char *command);
-void print_error();
+void print_error(char *command);
 
 #endif // SHELL_H_INCLUDED
