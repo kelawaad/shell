@@ -8,10 +8,26 @@
 #include "shell.h"
 
 // Uncomment the next line stop debugging output
-#undef DEBUG
-#define DEBUG 0
+//#undef DEBUG
+//#define DEBUG 0
+
+void sig_handler(int signo)
+{
+	if (signo == SIGINT)
+	{
+		char *msg = "\nAre you sure you want to exit? Y/N\n";
+	    write(1, msg, getCommandLength(msg));
+		char resp;
+		resp = fgetc(stdin);
+		fflush(stdin);
+		if(resp == 'Y' || resp == 'y')
+			exit(0);
+	}
+}
 
 int main(int argc, char** argv) {
+	if (signal(SIGINT, sig_handler) == SIG_ERR)
+		printf("\ncan't catch SIGINT\n");
     //printf("%s", getenv("PATH"));
     int is_running = 1;
     char *current_command = malloc((COMMAND_MAXLEN + 1) * sizeof(char)); // The current command being executed
@@ -29,7 +45,7 @@ int main(int argc, char** argv) {
         int run_in_background = 0;
         int num_args;
 
-        if(command_length != 0)
+        if(command_length != 0 && !(command_length == 1 && current_command[0] == '\n'))
         {
             // Remove the '\n' from the command
             current_command[command_length - 1] = 0;
@@ -184,5 +200,6 @@ void print_error(char *command) {
 	{
 		printf("%s: command not found\n", command);
 	}
-
 }
+
+
