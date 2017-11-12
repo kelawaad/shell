@@ -12,7 +12,7 @@
 #define DEBUG 0
 
 int main(int argc, char** argv) {
-	//printf("%s", getenv("PATH"));
+    //printf("%s", getenv("PATH"));
     int is_running = 1;
     char *current_command = malloc((COMMAND_MAXLEN + 1) * sizeof(char)); // The current command being executed
     file_name = getFileName(__FILE__);
@@ -22,10 +22,10 @@ int main(int argc, char** argv) {
         fgets(current_command, COMMAND_MAXLEN + 1, stdin);
 
         int command_length = getCommandLength(current_command);
-		if(command_length == COMMAND_MAX_LEN_EXCEEDED)
-		{
-			printf("Command max limit exceeded\n");
-		}
+        if(command_length == COMMAND_MAX_LEN_EXCEEDED)
+        {
+            printf("Command max limit exceeded\n");
+        }
         int run_in_background = 0;
         int num_args;
 
@@ -39,10 +39,10 @@ int main(int argc, char** argv) {
             debug_print("Command length: %d\n", command_length);
 
             if(strcmp(current_command, "exit") == 0)
-			{
-				is_running = 0;
+            {
+                is_running = 0;
                 break;
-			}
+            }
 
             char **command_params = parseCommand(current_command, command_length, &num_args);
             if(num_args > 0 && command_params[num_args - 1][0] == '&')
@@ -53,11 +53,9 @@ int main(int argc, char** argv) {
 
 			if(strcmp(command_params[0], "cd") == 0)
 			{
-				printf("CD command\n");
-				printf("PWD = %s\n", getenv("PWD"));
-				//int ret = chdir(command_params[1]);
+				int ret = chdir(command_params[1]);
 				if(ret == -1)
-                    print_error("cd");
+            		print_error("cd");
 				continue;
 			}
 
@@ -74,7 +72,6 @@ int main(int argc, char** argv) {
                 // PARENT Process
 
                 if(run_in_background) {
-					// NOT WORKING correctly
 					waitpid(pid, &status, WNOHANG);
                 } else {
 					wait(&status);
@@ -170,9 +167,11 @@ void print_error(char *command) {
 	if(strcmp(command, "cd") == 0) {
         if(err == ENOENT) {
             // Directory doesn't exist
+			printf("cd: Directory doesn't exist\n");
         }
         else if(err == ENOTDIR) {
             // A component is not a directory
+			printf("cd: A component is not a directory\n");
         }
         else if(err == EFAULT) {
 
@@ -181,7 +180,7 @@ void print_error(char *command) {
 
         }
 	}
-	if(err == ENOENT)
+	else if(err == ENOENT)
 	{
 		printf("%s: command not found\n", command);
 	}
