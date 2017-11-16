@@ -8,8 +8,8 @@
 #include "shell.h"
 
 // Uncomment the next line stop debugging output
-//#undef DEBUG
-//#define DEBUG 0
+#undef DEBUG
+#define DEBUG 0
 
 void sig_handler(int signo)
 {
@@ -69,7 +69,12 @@ int main(int argc, char** argv) {
 
 			if(strcmp(command_params[0], "cd") == 0)
 			{
-				int ret = chdir(command_params[1]);
+                char *path;
+                if(command_params[1] == NULL || strcmp(command_params[1], "~") == 0)
+                    path = getenv("HOME");
+                else
+                    path = command_params[1];
+				int ret = chdir(path);
 				if(ret == -1)
             		print_error("cd");
 				continue;
